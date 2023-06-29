@@ -3,41 +3,7 @@ import geopandas as gpd
 import streamlit as st
 import plotly.express as px
 
-df = pd.read_csv("Global_Earthquake_Data.csv")
-
-# get cotinent from 'longtitude' and 'latitude' columns
-world = gpd.read_file(gpd.datasets.get_path('naturalearth_lowres'))
-gdf = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.longitude, df.latitude))
-
-
-df_with_continents = gpd.sjoin(gdf, world, how="left", op='intersects')
-df_with_continents['geometry'] = df_with_continents.geometry.where(df_with_continents.geometry.notnull(), gdf.geometry)
-world['centroid'] = world.geometry.centroid
-continents = world.dissolve(by='continent')['centroid']
-
-
-def closest_continent(point):
-    distances = continents.distance(point)
-    return distances.idxmin()
-
-
-df_with_continents.loc[df_with_continents['continent'].isnull(), 'continent'] = df_with_continents[df_with_continents['continent'].isnull()]['geometry'].apply(closest_continent)
-df_with_continents['continent'] = df_with_continents['continent'].replace('Oceania', 'Australia')
-
-# drop rows with null values in 'depth' column
-df_with_continents = df_with_continents.dropna(subset=['depth'])
-
-# get decade from 'time' column
-df_with_continents['time'] = pd.to_datetime(df_with_continents['time'])
-df_with_continents['year'] = df_with_continents['time'].dt.year
-df_with_continents['decade'] = (df_with_continents['year'] // 10) * 10
-df_with_continents['country'] = df_with_continents['name']
-
-# drop irrelevent columns
-cols = ['id', 'year', 'decade', 'depth', 'mag','longitude','latitude', 'continent', 'country']
-df = df_with_continents[cols]
-df = df.rename(columns={'mag': 'magnitude'})
-
+df = pd.read_csv("final_data.csv")
 
 def main():
     st.title('Visualization of Data - Final Project')
